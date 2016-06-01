@@ -17,13 +17,41 @@ var UsersListComponent = (function () {
     function UsersListComponent(_router, _userService) {
         this._router = _router;
         this._userService = _userService;
+        this.addingUser = false;
     }
     UsersListComponent.prototype.onSelect = function (user) {
         this.selectedUser = user;
     };
+    /** Метод вызова массива пользователей c помощью Promise */
     UsersListComponent.prototype.getUsers = function () {
         var _this = this;
-        this._userService.getUsers().then(function (users) { return _this.users = users; });
+        this._userService
+            .getUsers()
+            .then(function (users) { return _this.users = users; })
+            .catch(function (error) { return _this.error = error; }); // TODO: Display error message
+    };
+    UsersListComponent.prototype.delete = function (user, event) {
+        var _this = this;
+        event.stopPropagation();
+        this._userService
+            .delete(user)
+            .then(function (res) {
+            _this.users = _this.users.filter(function (h) { return h !== user; });
+            if (_this.selectedUser === user) {
+                _this.selectedUser = null;
+            }
+        })
+            .catch(function (error) { return _this.error = error; }); // TODO: Display error message
+    };
+    UsersListComponent.prototype.addUser = function () {
+        this.addingUser = true;
+        this.selectedUser = null;
+    };
+    UsersListComponent.prototype.close = function (savedUser) {
+        this.addingUser = false;
+        if (savedUser) {
+            this.getUsers();
+        }
     };
     /**
      * Метод загруки массива userService
@@ -31,11 +59,6 @@ var UsersListComponent = (function () {
      */
     UsersListComponent.prototype.ngOnInit = function () {
         this.getUsers();
-    };
-    /** Метод вызова массива пользователей c помощью Promise */
-    UsersListComponent.prototype.getUsers = function () {
-        var _this = this;
-        this._userService.getUsers().then(function (users) { return _this.users = users; });
     };
     UsersListComponent.prototype.gotoDetail = function () {
         this._router.navigate(['UserDetail', { id: this.selectedUser.id }]);

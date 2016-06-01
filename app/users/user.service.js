@@ -9,19 +9,69 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var core_1 = require('@angular/core');
-var mock_users_1 = require('./mock-users');
+var http_1 = require('@angular/http');
+require('rxjs/add/operator/toPromise');
 var UserService = (function () {
-    function UserService() {
+    function UserService(http) {
+        this.http = http;
+        /** URL to web api */
+        this.usersUrl = 'app/users';
     }
-    UserService.prototype.getUser = function (id) {
-        return Promise.resolve(mock_users_1.USERS).then(function (users) { return users.filter(function (user) { return user.id === id; })[0]; });
-    };
+    /** Забираем коллекцию пользователей */
     UserService.prototype.getUsers = function () {
-        return Promise.resolve(mock_users_1.USERS);
+        return this.http.get(this.usersUrl)
+            .toPromise()
+            .then(function (response) { return response.json().data; })
+            .catch(this._handleError);
+    };
+    /** Забираем одного пользователя */
+    UserService.prototype.getUser = function (id) {
+        return this.getUsers()
+            .then(function (users) { return users.filter(function (user) { return user.id === id; })[0]; });
+    };
+    /** Добавляем нового пользователя */
+    UserService.prototype.post = function (user) {
+        var headers = new http_1.Headers({
+            'Content-Type': 'application/json' });
+        return this.http
+            .post(this.usersUrl, JSON.stringify(user), { headers: headers })
+            .toPromise()
+            .then(function (res) { return res.json().data; })
+            .catch(this._handleError);
+    };
+    /** Обновляем существующего пользователя */
+    UserService.prototype.put = function (user) {
+        var headers = new http_1.Headers();
+        headers.append('Content-Type', 'application/json');
+        var url = this.usersUrl + "/" + user.id;
+        return this.http
+            .put(url, JSON.stringify(user), { headers: headers })
+            .toPromise()
+            .then(function () { return user; })
+            .catch(this._handleError);
+    };
+    UserService.prototype.save = function (user) {
+        if (user.id) {
+            return this.put(user);
+        }
+        return this.post(user);
+    };
+    UserService.prototype.delete = function (user) {
+        var headers = new http_1.Headers();
+        headers.append('Content-Type', 'application/json');
+        var url = this.usersUrl + "/" + user.id;
+        return this.http
+            .delete(url, headers)
+            .toPromise()
+            .catch(this._handleError);
+    };
+    UserService.prototype._handleError = function (error) {
+        console.error('An error occurred', error);
+        return Promise.reject(error.message || error);
     };
     UserService = __decorate([
         core_1.Injectable(), 
-        __metadata('design:paramtypes', [])
+        __metadata('design:paramtypes', [http_1.Http])
     ], UserService);
     return UserService;
 }());

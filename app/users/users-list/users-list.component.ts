@@ -16,6 +16,8 @@ import { UserService } from './../user.service'
 export class UsersListComponent implements OnInit{
     users: User[];
     selectedUser: User;
+    addingUser = false;
+    error: any;
 
     /** Конструктор подключения userService */
     constructor(
@@ -26,8 +28,34 @@ export class UsersListComponent implements OnInit{
         this.selectedUser = user;
     }
 
+    /** Метод вызова массива пользователей c помощью Promise */
     getUsers() {
-        this._userService.getUsers().then(users => this.users = users);
+        this._userService
+            .getUsers()
+            .then(users => this.users = users)
+            .catch(error => this.error = error); // TODO: Display error message
+    }
+
+    delete(user: User, event: any) {
+        event.stopPropagation();
+        this._userService
+            .delete(user)
+            .then(res => {
+                this.users = this.users.filter(h => h !== user);
+                if (this.selectedUser === user) { this.selectedUser = null; }
+            })
+            .catch(error => this.error = error); // TODO: Display error message
+    }
+
+
+    addUser() {
+        this.addingUser = true;
+        this.selectedUser = null;
+    }
+
+    close(savedUser: User) {
+        this.addingUser = false;
+        if (savedUser) { this.getUsers(); }
     }
 
     /**
@@ -36,11 +64,6 @@ export class UsersListComponent implements OnInit{
      */
     ngOnInit() {
         this.getUsers();
-    }
-
-    /** Метод вызова массива пользователей c помощью Promise */
-    getUsers() {
-        this._userService.getUsers().then(users => this.users = users);
     }
 
     gotoDetail() {
