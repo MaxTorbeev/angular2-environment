@@ -15,6 +15,7 @@ _gh_pages/*
 src/website/static/*
 src/website/media/*
 
+typings
 bin
 cfcache
 develop-eggs
